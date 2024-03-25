@@ -1,2 +1,2 @@
 jjk():
-pas
+pass
