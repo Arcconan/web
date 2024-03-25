@@ -3,9 +3,16 @@ from virtual_assistant_v007.comands import *
 from virtual_assistant_v007.colors import *
 from datetime import datetime
 from collections import UserDict
+from abc import ABC, abstractmethod
 
 
-class Field:
+class FieldAbstract(ABC):
+    @abstractmethod
+    def is_valid(self, value):  # делаем метод абстрактным
+        pass
+
+
+class Field(FieldAbstract):
     def __init__(self, value):
         if not self.is_valid(value):
             raise ValueError
@@ -34,7 +41,7 @@ class Field:
 class Name(Field):
     def is_valid(self, value):
         return isinstance(value, str) and value
-    
+
 
 class Phone(Field):
     def __init__(self, value):
@@ -47,7 +54,7 @@ class Phone(Field):
         if not value:
             return True
         return isinstance(value, str) and value.isdigit() and len(value) == 10
-    
+
 
 class Email(Field):
 
@@ -60,13 +67,16 @@ class Email(Field):
         if not value:
             return True
         return re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$', value)
-    
+
     def __json__(self):
         return str(self.value) if self.value else None
-    
+
 
 class Address(Field):
-    
+
+    def is_valid(self, value):
+        pass
+
     def __json__(self):
         return str(self.value) if self.value else None
 
@@ -76,18 +86,6 @@ class Birthday(Field):
         if not self.is_valid(value):
             raise ValueError(BAD_FORMAT_BIRTHDAY)
         super().__init__(value)
-
-    @property
-    def value(self):
-        return self.__value
-
-    @value.setter
-    def value(self, new_value):
-        if not self.is_valid(new_value):
-            raise ValueError(BAD_FORMAT_BIRTHDAY)
-        if new_value:
-            datetime.strptime(new_value, "%Y-%m-%d")
-        self.__value = new_value
 
     def is_valid(self, value):
         if not value:
@@ -118,7 +116,7 @@ class Record:
     def add_email(self, email):
         email_obj = Email(email)
         self.emails.append(email_obj)
-        
+
     def set_birthday(self, birthday):
         self.birthday = Birthday(birthday)
 
@@ -159,7 +157,7 @@ class Record:
             return days_left
         else:
             return None
-        
+
     def __json__(self):
         record_data = {
             "name": self.name.__json__(),
@@ -194,7 +192,7 @@ class AddressBook(UserDict):
                 matching_records.append(record)
 
         return matching_records
-    
+
     def add_record(self, record):
         self.data[record.name.value] = record
 
@@ -203,7 +201,7 @@ class AddressBook(UserDict):
             if record.name.value.lower() == name.lower():
                 return record
         return None
-   
+
     def delete(self, name):
         if name in self.data:
             del self.data[name]
